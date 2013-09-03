@@ -65,4 +65,10 @@ File contain partitions layout for flashing kernel & recovery
         <recovery>/dev/block/platform/msm_sdcc.1/by-name/recovery</recovery>
         <cache>/dev/block/platform/msm_sdcc.1/by-name/cache</cache>
     </device>
+    <device>
+        <model>Nexus 10</model> <!-- Nexus 10 -->
+        <kernel>/dev/block/platform/dw_mmc.0/by-name/boot</kernel>
+        <recovery>/dev/block/platform/dw_mmc.0/by-name/recovery</recovery>
+        <cache>/dev/block/platform/dw_mmc.0/by-name/cache</cache>
+    </device>
 </devices>
