@@ -267,7 +267,7 @@ public class BatteryInfo extends Fragment implements SeekBar.OnSeekBarChangeList
 	        final String r=(String) msg.obj;
 	        final String[] rr = r.split(";");
             mbattery_percent.setText(rr[0]+"%");
-            mbattery_volt.setText(rr[1]+" mV");
+            mbattery_volt.setText((Integer.parseInt(rr[1])/1000)+" mV");
             mbattery_status.setText((Integer.parseInt(rr[4])/10)+"°C  "+rr[2]);
             }
         };
