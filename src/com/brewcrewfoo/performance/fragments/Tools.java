@@ -45,6 +45,7 @@ import android.widget.TextView;
 
 import com.brewcrewfoo.performance.R;
 import com.brewcrewfoo.performance.activities.FlasherActivity;
+import com.brewcrewfoo.performance.activities.FreezerActivity;
 import com.brewcrewfoo.performance.activities.PCSettings;
 import com.brewcrewfoo.performance.activities.ResidualsActivity;
 import com.brewcrewfoo.performance.util.CMDProcessor;
@@ -84,12 +85,12 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
         if (mStartTime>0)
             mOptimDB.setSummary(DateUtils.getRelativeTimeSpanString(mStartTime));
 
-        if(Helpers.binExist("dd").equals(NOT_FOUND)){
+        if(Helpers.binExist("dd").equals(NOT_FOUND) || NO_FLASH){
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("category_flash_img");
             getPreferenceScreen().removePreference(hideCat);
         }
-        if(Helpers.binExist("sqlite3").equals(NOT_FOUND)){
-            PreferenceCategory hideCat = (PreferenceCategory) findPreference("category_optim_db");
+        if(Helpers.binExist("pm").equals(NOT_FOUND)){
+            PreferenceCategory hideCat = (PreferenceCategory) findPreference("category_freezer");
             getPreferenceScreen().removePreference(hideCat);
         }
         setRetainInstance(true);
@@ -128,25 +129,16 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.tools_menu, menu);
-        final SubMenu smenu = menu.addSubMenu(0, NEW_MENU_ID, 0,getString(R.string.menu_tab));
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        final int cur=mViewPager.getCurrentItem();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(i!=cur)
-            smenu.add(0, NEW_MENU_ID +i+1, 0, mViewPager.getAdapter().getPageTitle(i));
-        }
+        Helpers.addItems2Menu(menu,NEW_MENU_ID,getString(R.string.menu_tab),(ViewPager) getView().getParent());
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.app_settings) {
-            Intent intent = new Intent(getActivity(), PCSettings.class);
-            startActivity(intent);
-        }
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(item.getItemId() == NEW_MENU_ID+i+1) {
-                mViewPager.setCurrentItem(i);
-            }
+        Helpers.removeCurItem(item,Menu.FIRST+1,(ViewPager) getView().getParent());
+        switch(item.getItemId()){
+            case R.id.app_settings:
+                Intent intent = new Intent(getActivity(), PCSettings.class);
+                startActivity(intent);
+                break;
         }
         return true;
     }
@@ -215,7 +207,7 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
             startActivity(intent);
         }
         else if(key.equals(PREF_FIX_PERMS)) {
-            Helpers.get_assetsFile("fix_permissions",getActivity(),"#");
+            Helpers.get_assetsScript("fix_permissions",getActivity(),"#","");
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(getString(R.string.fix_perms_title))
                     .setMessage(getString(R.string.fix_perms_msg))
@@ -242,7 +234,9 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
 
         }
         else if(key.equals(PREF_OPTIM_DB)) {
-            Helpers.get_assetsFile("sql_optimize",getActivity(),"#");
+            Helpers.get_assetsBinary("sqlite3",getActivity());
+            Helpers.get_assetsScript("sql_optimize",getActivity(),"busybox chmod 750 "+getActivity().getFilesDir()+"/sqlite3","");
+
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             builder.setTitle(getString(R.string.optim_db_title))
                     .setMessage(getString(R.string.ps_optim_db)+"\n\n"+getString(R.string.fix_perms_msg))
@@ -262,12 +256,21 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
             //alertDialog.setCancelable(false);
-
             Button theButton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
             theButton.setOnClickListener(new sqlListener(alertDialog));
-
-
         }
+        else if (key.equals(PREF_FRREZE)){
+            Intent getpacks = new Intent(getActivity(), FreezerActivity.class);
+            getpacks.putExtra("freeze",true);
+            getpacks.putExtra("packs","usr");
+            startActivity(getpacks);
+        }
+        else if (key.equals(PREF_UNFRREZE)){
+            Intent getpacks = new Intent(getActivity(), FreezerActivity.class);
+            getpacks.putExtra("freeze",false);
+            startActivity(getpacks);
+        }
+
         return super.onPreferenceTreeClick(preferenceScreen, preference);
     }
 
@@ -304,7 +307,7 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
             isrun=true;
             tip=1;
             progressDialog = ProgressDialog.show(getActivity(), getString(R.string.fix_perms_title),getString(R.string.wait));
-            new CMDProcessor().su.runWaitFor("busybox cat "+ISTORAGE+"fix_permissions > " + SH_PATH );
+            Helpers.shWrite(getActivity().getFilesDir()+"/fix_permissions");
         }
 
         @Override
@@ -387,7 +390,7 @@ public class Tools extends PreferenceFragment implements OnSharedPreferenceChang
             tip=2;
             progressDialog = ProgressDialog.show(getActivity(), getString(R.string.optim_db_title),getString(R.string.wait));
             mPreferences.edit().putLong(PREF_OPTIM_DB,System.currentTimeMillis()).commit();
-            new CMDProcessor().su.runWaitFor("busybox cat "+ISTORAGE+"sql_optimize > " + SH_PATH );
+            Helpers.shWrite(getActivity().getFilesDir()+"/sql_optimize");
         }
 
         @Override

@@ -45,27 +45,16 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
     private SeekBar mMinSlider;
     private Spinner mGovernor;
     private Spinner mIo;
-    private Switch mSetOnBoot;
     private TextView mCurFreq;
     private TextView mMaxSpeedText;
     private TextView mMinSpeedText;
     private String[] mAvailableFrequencies;
-    private String[] mAvailableGovernors;
-    private String[] mAvailableIo;
-
     private String mMaxFreqSetting;
     private String mMinFreqSetting;
-    private String mCurrentGovernor;
-    private String mCurrentIo;
-    private String mCurMaxSpeed;
-    private String mCurMinSpeed;
-
     private CurCPUThread mCurCPUThread;
     SharedPreferences mPreferences;
-
     private boolean mIsTegra3 = false;
-    private int mFrequenciesNum;
-
+    private boolean mIsDynFreq = false;
     private static final int NEW_MENU_ID=Menu.FIRST+1;
 
 
@@ -81,8 +70,8 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
         View view = inflater.inflate(R.layout.cpu_settings, root, false);
 
         mCurFreq = (TextView) view.findViewById(R.id.current_speed);
-
         mIsTegra3 = new File(TEGRA_MAX_FREQ_PATH).exists();
+        mIsDynFreq = new File(DYN_FREQ_PATH).exists();
         mAvailableFrequencies = new String[0];
 
         String availableFrequenciesLine = Helpers.readOneLine(STEPS_PATH);
@@ -91,20 +80,19 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
             Arrays.sort(mAvailableFrequencies, new Comparator<String>() {
                 @Override
                 public int compare(String object1, String object2) {
-                    return Integer.valueOf(object1).compareTo(
-                            Integer.valueOf(object2));
+                    return Integer.valueOf(object1).compareTo(Integer.valueOf(object2));
                 }
             });
         }
 
-        mFrequenciesNum = mAvailableFrequencies.length - 1;
-        mAvailableGovernors = Helpers.readOneLine(GOVERNORS_LIST_PATH).split(" ");
-        mAvailableIo = Helpers.getAvailableIOSchedulers();
+        int mFrequenciesNum = mAvailableFrequencies.length - 1;
+        String[] mAvailableGovernors = Helpers.readOneLine(GOVERNORS_LIST_PATH).split(" ");
+        String[] mAvailableIo = Helpers.getAvailableIOSchedulers();
 
-        mCurrentGovernor = Helpers.readOneLine(GOVERNOR_PATH);
-        mCurrentIo = Helpers.getIOScheduler();
-        mCurMaxSpeed = Helpers.readOneLine(MAX_FREQ_PATH);
-        mCurMinSpeed = Helpers.readOneLine(MIN_FREQ_PATH);
+        String mCurrentGovernor = Helpers.readOneLine(GOVERNOR_PATH);
+        String mCurrentIo = Helpers.getIOScheduler();
+        String mCurMaxSpeed = Helpers.readOneLine(MAX_FREQ_PATH);
+        String mCurMinSpeed = Helpers.readOneLine(MIN_FREQ_PATH);
 
         if (mIsTegra3) {
             String curTegraMaxSpeed = Helpers.readOneLine(TEGRA_MAX_FREQ_PATH);
@@ -114,11 +102,19 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
                 if (curTegraMax > 0) {
                     mCurMaxSpeed = Integer.toString(curTegraMax);
                 }
-            } catch (NumberFormatException ex) {
+            }
+            catch (NumberFormatException ex) {
                 curTegraMax = 0;
             }
         }
-
+        LinearLayout lminspeed=(LinearLayout) view.findViewById(R.id.min_speed_layout);
+        if(mIsDynFreq){
+            mCurMaxSpeed = Helpers.readOneLine(DYN_FREQ_PATH);
+            lminspeed.setVisibility(LinearLayout.GONE);
+        }
+        else{
+            lminspeed.setVisibility(LinearLayout.VISIBLE);
+        }
 
         mMaxSlider = (SeekBar) view.findViewById(R.id.max_slider);
         mMaxSlider.setMax(mFrequenciesNum);
@@ -135,16 +131,13 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
         mMinSlider.setOnSeekBarChangeListener(this);
 
         mGovernor = (Spinner) view.findViewById(R.id.pref_governor);
-        ArrayAdapter<CharSequence> governorAdapter = new ArrayAdapter<CharSequence>(
-                getActivity(), android.R.layout.simple_spinner_item);
-        governorAdapter
-                .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<CharSequence> governorAdapter = new ArrayAdapter<CharSequence>(getActivity(), android.R.layout.simple_spinner_item);
+        governorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         for (String mAvailableGovernor : mAvailableGovernors) {
             governorAdapter.add(mAvailableGovernor);
         }
         mGovernor.setAdapter(governorAdapter);
-        mGovernor.setSelection(Arrays.asList(mAvailableGovernors).indexOf(
-                mCurrentGovernor));
+        mGovernor.setSelection(Arrays.asList(mAvailableGovernors).indexOf(mCurrentGovernor));
         mGovernor.post(new Runnable() {
             public void run() {
                 mGovernor.setOnItemSelectedListener(new GovListener());
@@ -152,10 +145,8 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
         });
 
         mIo = (Spinner) view.findViewById(R.id.pref_io);
-        ArrayAdapter<CharSequence> ioAdapter = new ArrayAdapter<CharSequence>(
-                getActivity(), android.R.layout.simple_spinner_item);
-        ioAdapter
-                .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<CharSequence> ioAdapter = new ArrayAdapter<CharSequence>(getActivity(), android.R.layout.simple_spinner_item);
+        ioAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         for (String aMAvailableIo : mAvailableIo) {
             ioAdapter.add(aMAvailableIo);
         }
@@ -167,20 +158,19 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
             }
         });
 
-        mSetOnBoot = (Switch) view.findViewById(R.id.cpu_sob);
+        Switch mSetOnBoot = (Switch) view.findViewById(R.id.cpu_sob);
         mSetOnBoot.setChecked(mPreferences.getBoolean(CPU_SOB, false));
-        mSetOnBoot
-                .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mSetOnBoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
-                    public void onCheckedChanged(CompoundButton v,boolean checked) {
+                    public void onCheckedChanged(CompoundButton v, boolean checked) {
                         final SharedPreferences.Editor editor = mPreferences.edit();
                         editor.putBoolean(CPU_SOB, checked);
-			if(checked){
-				editor.putString(PREF_MIN_CPU, Helpers.readOneLine(MIN_FREQ_PATH));
-				editor.putString(PREF_MAX_CPU, Helpers.readOneLine(MAX_FREQ_PATH));
-				editor.putString(PREF_GOV, Helpers.readOneLine(GOVERNOR_PATH));
-				editor.putString(PREF_IO, Helpers.getIOScheduler());
-			}                        
+                        if (checked) {
+                            editor.putString(PREF_MIN_CPU, Helpers.readOneLine(MIN_FREQ_PATH));
+                            editor.putString(PREF_MAX_CPU, Helpers.readOneLine(MAX_FREQ_PATH));
+                            editor.putString(PREF_GOV, Helpers.readOneLine(GOVERNOR_PATH));
+                            editor.putString(PREF_IO, Helpers.getIOScheduler());
+                        }
                         editor.commit();
                     }
                 });
@@ -191,26 +181,17 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.cpu_settings_menu, menu);
-        final SubMenu smenu = menu.addSubMenu(0, NEW_MENU_ID, 0,getString(R.string.menu_tab));
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        final int cur=mViewPager.getCurrentItem();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(i!=cur)
-            smenu.add(0, NEW_MENU_ID +i+1, 0, mViewPager.getAdapter().getPageTitle(i));
-        }
+        Helpers.addItems2Menu(menu,NEW_MENU_ID,getString(R.string.menu_tab),(ViewPager) getView().getParent());
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.app_settings) {
-            Intent intent = new Intent(getActivity(), PCSettings.class);
-            startActivity(intent);
-        }
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(item.getItemId() == NEW_MENU_ID+i+1) {
-                mViewPager.setCurrentItem(i);
-            }
+        Helpers.removeCurItem(item,NEW_MENU_ID,(ViewPager) getView().getParent());
+        switch(item.getItemId()){
+            case R.id.app_settings:
+                Intent intent = new Intent(getActivity(), PCSettings.class);
+                startActivity(intent);
+                break;
         }
         return true;
     }
@@ -220,7 +201,8 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
         if (fromUser) {
             if (seekBar.getId() == R.id.max_slider) {
                 setMaxSpeed(seekBar, progress);
-            } else if (seekBar.getId() == R.id.min_slider) {
+            }
+            else if (seekBar.getId() == R.id.min_slider) {
                 setMinSpeed(seekBar, progress);
             }
         }
@@ -233,29 +215,25 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         // we have a break now, write the values..
-
         for (int i = 0; i < Helpers.getNumOfCpus(); i++) {
-            new CMDProcessor().su.runWaitFor("busybox echo " + mMaxFreqSetting
-                    + " > " + MAX_FREQ_PATH.replace("cpu0", "cpu" + i));
-            new CMDProcessor().su.runWaitFor("busybox echo " + mMinFreqSetting
-                    + " > " + MIN_FREQ_PATH.replace("cpu0", "cpu" + i));
+            new CMDProcessor().su.runWaitFor("busybox echo " + mMaxFreqSetting + " > " + MAX_FREQ_PATH.replace("cpu0", "cpu" + i));
+            new CMDProcessor().su.runWaitFor("busybox echo " + mMinFreqSetting + " > " + MIN_FREQ_PATH.replace("cpu0", "cpu" + i));
+        }
+        if (mIsTegra3) {
+            new CMDProcessor().su.runWaitFor("busybox echo " + mMaxFreqSetting + " > " + TEGRA_MAX_FREQ_PATH);
+        }
+        if (mIsDynFreq) {
+            new CMDProcessor().su.runWaitFor("busybox echo " + mMaxFreqSetting + " > " + DYN_FREQ_PATH);
         }
 
-        if (mIsTegra3) {
-            new CMDProcessor().su.runWaitFor("busybox echo " + mMaxFreqSetting
-                    + " > " + TEGRA_MAX_FREQ_PATH);
-        }
     }
 
     public class GovListener implements OnItemSelectedListener {
         public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
             String selected = parent.getItemAtPosition(pos).toString();
-            // do this on all cpu's since MSM can have different governors on
-            // each cpu
-            // and it doesn't hurt other devices to do it
+            // do this on all cpu's since MSM can have different governors on each cpu and it doesn't hurt other devices to do it
             for (int i = 0; i < Helpers.getNumOfCpus(); i++) {
-                new CMDProcessor().su.runWaitFor("busybox echo " + selected
-                        + " > " + GOVERNOR_PATH.replace("cpu0", "cpu" + i));
+                new CMDProcessor().su.runWaitFor("busybox echo " + selected + " > " + GOVERNOR_PATH.replace("cpu0", "cpu" + i));
             }
             updateSharedPrefs(PREF_GOV, selected);
         }
@@ -270,6 +248,7 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
             String selected = parent.getItemAtPosition(pos).toString();
 			final StringBuilder sb = new StringBuilder();
 			for(int i=0; i<IO_SCHEDULER_PATH.length; i++){
+                if (new File(IO_SCHEDULER_PATH[i]).exists())
 				sb.append("busybox echo "+selected+" > " + IO_SCHEDULER_PATH[i] + "\n");
 			}
 			Helpers.shExec(sb);
@@ -283,22 +262,21 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
 
     @Override
     public void onResume() {
-        super.onResume();
         if (mCurCPUThread == null) {
             mCurCPUThread = new CurCPUThread();
             mCurCPUThread.start();
         }
+        super.onResume();
     }
 
     @Override
     public void onPause() {
-        super.onPause();
         Helpers.updateAppWidget(getActivity());
+        super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (mCurCPUThread != null) {
             if (mCurCPUThread.isAlive()) {
                 mCurCPUThread.interrupt();
@@ -308,6 +286,7 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
                 }
             }
         }
+        super.onDestroy();
     }
 
     public void setMaxSpeed(SeekBar seekBar, int progress) {
@@ -353,7 +332,8 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
                     final String curFreq = Helpers.readOneLine(CUR_CPU_PATH);
                     mCurCPUHandler.sendMessage(mCurCPUHandler.obtainMessage(0,curFreq));
                 }
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 //return;
             }
         }
@@ -362,14 +342,13 @@ public class CPUSettings extends Fragment implements SeekBar.OnSeekBarChangeList
 
     protected Handler mCurCPUHandler = new Handler() {
         public void handleMessage(Message msg) {
-            mCurFreq.setText(Helpers.toMHz((String) msg.obj));
+        mCurFreq.setText(Helpers.toMHz((String) msg.obj));
         }
     };
 
     private void updateSharedPrefs(String var, String value) {
         final SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString(var, value);
-        editor.commit();
+        editor.putString(var, value).commit();
     }
 }
 

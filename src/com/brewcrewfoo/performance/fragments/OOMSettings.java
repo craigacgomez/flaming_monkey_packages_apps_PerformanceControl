@@ -18,6 +18,7 @@
 
 package com.brewcrewfoo.performance.fragments;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -37,6 +38,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
 import com.brewcrewfoo.performance.R;
+import com.brewcrewfoo.performance.activities.KSMActivity;
 import com.brewcrewfoo.performance.activities.PCSettings;
 import com.brewcrewfoo.performance.activities.PackActivity;
 import com.brewcrewfoo.performance.util.CMDProcessor;
@@ -79,6 +81,8 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
     private CheckBoxPreference mSysON;
     private Preference mUserNames;
     private Preference mSysNames;
+    private CheckBoxPreference mKSM;
+    private Preference mKSMsettings;
 
     private Boolean ispm;
 	
@@ -117,6 +121,10 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
         mSysON=(CheckBoxPreference) findPreference(PREF_SYS_PROC);
         mUserNames= findPreference(PREF_USER_NAMES);
         mSysNames= findPreference(PREF_SYS_NAMES);
+
+        mKSM=(CheckBoxPreference) findPreference(PREF_RUN_KSM);
+        mKSMsettings= findPreference("ksm_settings");
+
         if (!new File(USER_PROC_PATH).exists()) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("notkill_user_proc");
             getPreferenceScreen().removePreference(hideCat);
@@ -133,6 +141,14 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
             mSysON.setChecked(Helpers.readOneLine(SYS_PROC_PATH).equals("1"));
             mPreferences.edit().putString(PREF_SYS_NAMES, Helpers.readOneLine(USER_SYS_NAMES_PATH)).apply();
         }
+        if (!new File(KSM_RUN_PATH).exists()) {
+            PreferenceCategory hideCat = (PreferenceCategory) findPreference("ksm");
+            getPreferenceScreen().removePreference(hideCat);
+        }
+        else{
+            mKSM.setChecked(Helpers.readOneLine(KSM_RUN_PATH).equals("1"));
+            mKSMsettings.setSummary(getString(R.string.ksm_pagtoscan)+" "+Helpers.readOneLine(KSM_PAGESTOSCAN_PATH)+" | "+getString(R.string.ksm_sleep)+" "+Helpers.readOneLine(KSM_SLEEP_PATH));
+        }
         ispm=(!Helpers.binExist("pm").equals(NOT_FOUND));
     }
 
@@ -144,26 +160,17 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.oom_menu, menu);
-        final SubMenu smenu = menu.addSubMenu(0, NEW_MENU_ID, 0,getString(R.string.menu_tab));
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        final int cur=mViewPager.getCurrentItem();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(i!=cur)
-            smenu.add(0, NEW_MENU_ID +i+1, 0, mViewPager.getAdapter().getPageTitle(i));
-        }
+        Helpers.addItems2Menu(menu,NEW_MENU_ID,getString(R.string.menu_tab),(ViewPager) getView().getParent());
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.app_settings) {
-            Intent intent = new Intent(getActivity(), PCSettings.class);
-            startActivity(intent);
-        }
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(item.getItemId() == NEW_MENU_ID+i+1) {
-                mViewPager.setCurrentItem(i);
-            }
+        Helpers.removeCurItem(item,Menu.FIRST+1,(ViewPager) getView().getParent());
+        switch(item.getItemId()){
+            case R.id.app_settings:
+                Intent intent = new Intent(getActivity(), PCSettings.class);
+                startActivity(intent);
+                break;
         }
         return true;
     }
@@ -280,6 +287,18 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
                 ProcEditDialog(key,getString(R.string.pt_sys_names_proc),"",USER_SYS_NAMES_PATH,true);
             }
         }
+        else if (preference.equals(mKSM)){
+            if (Integer.parseInt(Helpers.readOneLine(KSM_RUN_PATH))==0){
+                new CMDProcessor().su.runWaitFor("busybox echo 1 > " + KSM_RUN_PATH);
+            }
+            else{
+                new CMDProcessor().su.runWaitFor("busybox echo 0 > " + KSM_RUN_PATH);
+            }
+            return true;
+        }
+        else if (preference.equals(mKSMsettings)){
+            startActivityForResult(new Intent(getActivity(), KSMActivity.class), 1);
+        }
 
         return super.onPreferenceTreeClick(preferenceScreen, preference);
     }
@@ -296,7 +315,17 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
 	    }
 
     }
-
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        getActivity();
+        if (requestCode == 1) {
+            if(resultCode == Activity.RESULT_OK){
+                String s[]= data.getStringExtra("result").split(" ");
+                mKSMsettings.setSummary(getString(R.string.ksm_pagtoscan)+" "+s[0]+" | "+getString(R.string.ksm_sleep)+" "+s[1]);
+            }
+            //if (resultCode == Activity.RESULT_CANCELED) {}
+        }
+    }
 	private void updateOOM(String[] v) {
 		mForegroundApp.setSummary(oomConv(values[0])+"mb "+"[ "+v[0]+" ]");
 		mVisibleApp.setSummary(oomConv(values[1])+"mb "+"[ "+v[1]+" ]");
@@ -399,7 +428,7 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
 		@Override
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 			if (actionId == EditorInfo.IME_ACTION_DONE) {
-				int val = Integer.valueOf(settingText.getText().toString());
+				int val = Integer.parseInt(settingText.getText().toString());
 				seekbar.setProgress(val);
 				return true;
 			}
@@ -459,7 +488,7 @@ public class OOMSettings extends PreferenceFragment implements OnSharedPreferenc
 			.setPositiveButton(ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					int val = Integer.valueOf(settingText.getText().toString());
+					int val = Integer.parseInt(settingText.getText().toString());
 					if(val<min){val=min;}
 					seekbar.setProgress(val);
 					int newProgress = seekbar.getProgress();

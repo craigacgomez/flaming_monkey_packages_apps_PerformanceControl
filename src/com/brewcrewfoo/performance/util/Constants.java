@@ -21,8 +21,11 @@ package com.brewcrewfoo.performance.util;
 public interface Constants {
 
     public static final String TAG = "PerformanceControl";
-
-    public static final String ISTORAGE="/data/data/com.brewcrewfoo.performance/files/";
+    public static final String VERSION_NUM = "2.1.3";
+    //hide flashing kernel/recovery options
+    // NO_FLASH=true > hide flash options
+    // NO_FLASH=false > show flash options
+    public static final Boolean NO_FLASH = false;
 
     // CPU settings
     public static final String CUR_CPU_PATH = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
@@ -33,6 +36,8 @@ public interface Constants {
     public static final String GOVERNORS_LIST_PATH = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors";
     public static final String GOVERNOR_PATH = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor";
     public static final String[] IO_SCHEDULER_PATH = {"/sys/block/mmcblk0/queue/scheduler","/sys/block/mmcblk1/queue/scheduler"};
+    //Dynamic frequency scaling
+    public static final String DYN_FREQ_PATH = "/sys/power/cpufreq_max_limit";
     
     public static final String NUM_OF_CPUS_PATH = "/sys/devices/system/cpu/present";
 
@@ -52,17 +57,13 @@ public interface Constants {
     public static final String PREF_OFFSETS = "pref_offsets";
     // Battery
     public static final String BAT_VOLT_PATH = "/sys/class/power_supply/android-battery/voltage_now";
-    public static final String BAT_PERCENT_PATH = "/sys/class/power_supply/android-battery/capacity";
-    public static final String BAT_STAT_PATH = "/sys/class/power_supply/android-battery/status";
-    public static final String BAT_TEMP_PATH = "/sys/class/power_supply/android-battery/temp";
-    public static final String BAT_TECH_PATH = "/sys/class/power_supply/android-battery/technology";
+
     // Other settings
     public static final String MINFREE_PATH = "/sys/module/lowmemorykiller/parameters/minfree";
     public static final String MINFREE_ADJ_PATH = "/sys/module/lowmemorykiller/parameters/adj";
     public static final String[] READ_AHEAD_PATH ={ "/sys/devices/virtual/bdi/179:0/read_ahead_kb","/sys/devices/virtual/bdi/179:32/read_ahead_kb"};
     //"/sys/devices/virtual/bdi/default/read_ahead_kb"
     
-    public static final String FASTCHARGE_PATH = "/sys/kernel/fast_charge/force_fast_charge";
     public static final String INTENT_ACTION_FASTCHARGE = "com.aokp.romcontrol.FCHARGE_CHANGED";
     public static final String PREF_MINFREE = "pref_minfree";
     public static final String PREF_MINFREE_BOOT = "pref_minfree_boot";
@@ -76,6 +77,18 @@ public interface Constants {
     public static final String OOM_HIDDEN_APP = "oom_hidden_app";
     public static final String OOM_CONTENT_PROVIDERS = "oom_content_providers";
     public static final String OOM_EMPTY_APP = "oom_empty_app";
+    //------ KSM
+    public static final String KSM_RUN_PATH = "/sys/kernel/mm/ksm/run";
+    public static final String KSM_FULLSCANS_PATH = "/sys/kernel/mm/ksm/full_scans";
+    public static final String KSM_PAGESSHARED_PATH = "/sys/kernel/mm/ksm/pages_shared";
+    public static final String KSM_PAGESSHARING_PATH = "/sys/kernel/mm/ksm/pages_sharing";
+    public static final String KSM_PAGESTOSCAN_PATH = "/sys/kernel/mm/ksm/pages_to_scan";
+    public static final String KSM_PAGESUNSHERED_PATH = "/sys/kernel/mm/ksm/pages_unshared";
+    public static final String KSM_PAGESVOLATILE_PATH = "/sys/kernel/mm/ksm/pages_volatile";
+    public static final String KSM_SLEEP_PATH = "/sys/kernel/mm/ksm/sleep_millisecs";
+    public static final String PREF_RUN_KSM = "pref_run_ksm";
+    public static final String KSM_SOB = "ksm_boot";
+
     //------ DoNotKillProc
     public static final String USER_PROC_PATH = "/sys/module/lowmemorykiller/parameters/donotkill_proc";
     public static final String SYS_PROC_PATH = "/sys/module/lowmemorykiller/parameters/donotkill_sysproc";
@@ -102,7 +115,6 @@ public interface Constants {
     public static final String BL_TIMEOUT_PATH="/sys/class/misc/notification/bl_timeout";
     public static final String BL_TOUCH_ON_PATH="/sys/class/misc/notification/touchlight_enabled";
     //-------BLN---------
-    public static final String BLN_PATH="/sys/class/misc/backlightnotification/enabled";
     public static final String PREF_BLN= "pref_bln";
     //-------PFK---------
     public static final String PFK_VER = "/sys/class/misc/phantom_kp_filter/version";
@@ -171,11 +183,22 @@ public interface Constants {
     public static final String PREF_LOG = "pref_log";
     public static final String PREF_OPTIM_DB = "pref_optim_db";
 
+    //Freezer
+    public static final String PREF_FRREZE = "freeze_packs";
+    public static final String PREF_UNFRREZE = "unfreeze_packs";
+
+    //zRam
+    public static final String ZRAM_SIZE_PATH = "/sys/block/zram0/disksize";
+    public static final String ZRAM_RESET_PATH = "/sys/block/zram0/reset";
+    public static final String ZRAM_COMPR_PATH = "/sys/block/zram0/compr_data_size";
+    public static final String ZRAM_ORIG_PATH = "/sys/block/zram0/orig_data_size";
+    public static final String ZRAM_MEMTOT_PATH = "/sys/block/zram0/mem_used_total";
+
     // PC Settings
     public static final String PREF_USE_LIGHT_THEME = "use_light_theme";
     public static final String PREF_WIDGET_BG_COLOR = "widget_bg_color";
     public static final String PREF_WIDGET_TEXT_COLOR = "widget_text_color";
-    public static final String VERSION_NUM = "2.1.0";
+
 }
 
 

@@ -43,13 +43,10 @@ public class PCSettings extends PreferenceActivity implements Constants, Activit
         addPreferencesFromResource(R.xml.pc_settings);
 
         mLightThemePref = (CheckBoxPreference) findPreference("use_light_theme");
-
         mWidgetBgColorPref = (ColorPickerPreference) findPreference("widget_bg_color");
         mWidgetBgColorPref.setOnPreferenceChangeListener(this);
-
         mWidgetTextColorPref = (ColorPickerPreference) findPreference("widget_text_color");
         mWidgetTextColorPref.setOnPreferenceChangeListener(this);
-
         mVersion = findPreference("version_info");
         mVersion.setTitle(getString(R.string.pt_ver) + VERSION_NUM);
 
@@ -57,8 +54,7 @@ public class PCSettings extends PreferenceActivity implements Constants, Activit
     }
 
     @Override
-    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen,
-                                         Preference preference) {
+    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         String key = preference.getKey();
         if ("use_light_theme".equals(key)) {
             Helpers.restartPC(this);
@@ -70,7 +66,7 @@ public class PCSettings extends PreferenceActivity implements Constants, Activit
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (preference == mWidgetBgColorPref) {
-            String hex = ColorPickerPreference.convertToARGB(Integer.valueOf(String.valueOf(newValue)));
+            String hex = ColorPickerPreference.convertToARGB(Integer.parseInt(String.valueOf(newValue)));
             preference.setSummary(hex);
             int intHex = ColorPickerPreference.convertToColorInt(hex);
             final SharedPreferences.Editor editor = mPreferences.edit();
@@ -79,7 +75,7 @@ public class PCSettings extends PreferenceActivity implements Constants, Activit
             Helpers.updateAppWidget(this);
             return true;
         } else if (preference == mWidgetTextColorPref) {
-            String hex = ColorPickerPreference.convertToARGB(Integer.valueOf(String.valueOf(newValue)));
+            String hex = ColorPickerPreference.convertToARGB(Integer.parseInt(String.valueOf(newValue)));
             preference.setSummary(hex);
             int intHex = ColorPickerPreference.convertToColorInt(hex);
             final SharedPreferences.Editor editor = mPreferences.edit();

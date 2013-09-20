@@ -58,6 +58,7 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         setTheme();
         Intent intent1=getIntent();
@@ -110,6 +111,7 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
         List<Item>dir = new ArrayList<Item>();
         List<Item>fls = new ArrayList<Item>();
         try{
+            assert dirs != null;
             for(File ff: dirs){
                 Date lastModDate = new Date(ff.lastModified());
                 DateFormat formater = DateFormat.getDateTimeInstance();
@@ -211,14 +213,13 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
     private class FlashOperation extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
-
             final StringBuilder sb = new StringBuilder();
             final String dn=Environment.getExternalStorageDirectory().getAbsolutePath()+"/PerformanceControl/tmp";
 
             if(tip.equalsIgnoreCase("kernel")){
                 if(iszip){
                     try{
-                        new UnzipUtility().unzip(nFile,dn);
+                        new UnzipUtility().unzipfile(nFile,dn,"boot.img");
                     }
                     catch (Exception e) {
                         Log.d(TAG,"unzip error: "+nFile);
@@ -226,11 +227,11 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
                         return null;
                     }
                     nFile=dn+"/boot.img";
-                    sb.append("dd if="+nFile+" of="+part+"\n");
-                    sb.append("busybox rm -rf "+dn+"/*\n");
+                    sb.append("dd if=").append(nFile).append(" of=").append(part).append("\n");
+                    sb.append("busybox rm -rf ").append(dn).append("/*\n");
                 }
                 else{
-                    sb.append("dd if="+nFile+" of="+part+"\n");
+                    sb.append("dd if=").append(nFile).append(" of=").append(part).append("\n");
                 }
                 sb.append("busybox rm -rf /data/dalvik-cache/*\n");
                 sb.append("busybox rm -rf /cache/*\n");
@@ -240,7 +241,7 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
             else{
                 if(iszip){
                     try{
-                        new UnzipUtility().unzip(nFile,dn);
+                        new UnzipUtility().unzipfile(nFile,dn,"recovery.img");
                     }
                     catch (Exception e) {
                         Log.d(TAG,"unzip error: "+nFile);
@@ -248,11 +249,11 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
                         return null;
                     }
                     nFile=dn+"/recovery.img";
-                    sb.append("dd if="+nFile+" of="+part+"\n");
-                    sb.append("busybox rm -rf "+dn+"/*\n");
+                    sb.append("dd if=").append(nFile).append(" of=").append(part).append("\n");
+                    sb.append("busybox rm -rf ").append(dn).append("/*\n");
                 }
                 else{
-                    sb.append("dd if="+nFile+" of="+part+"\n");
+                    sb.append("dd if=").append(nFile).append(" of=").append(part).append("\n");
                 }
 
                 sb.append("reboot recovery\n");
@@ -278,7 +279,6 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
         protected void onProgressUpdate(Void... values) {
         }
     }
-
 
     class CustomListener implements View.OnClickListener {
         private final Dialog dialog;
@@ -309,7 +309,6 @@ public class FileChooser extends ListActivity implements Constants, ActivityThem
                                 dialog.cancel();
                             }
                         });
-        ;
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
         //alertDialog.setCancelable(false);

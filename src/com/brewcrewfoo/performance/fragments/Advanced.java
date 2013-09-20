@@ -46,14 +46,6 @@ import java.io.File;
 public class Advanced extends PreferenceFragment implements OnSharedPreferenceChangeListener, Constants {
 
     private static final int NEW_MENU_ID=Menu.FIRST+1;
-	private Preference mDirtyRatio;
-	private Preference mDirtyBackground;
-	private Preference mDirtyExpireCentisecs;
-	private Preference mDirtyWriteback;
-	private Preference mMinFreeK;
-	private Preference mOvercommit;
-	private Preference mSwappiness;
-//--------
 	private CheckBoxPreference mDsync;
 	
 	private Preference mBltimeout;
@@ -71,7 +63,6 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 	private Preference mMenuBackFirstErrWait;
 	private Preference mMenuBackLastErrWait;	
 //--------
-	private Preference mVfs;
 	private CheckBoxPreference mDynamicWriteBackOn;
 	private Preference mDynamicWriteBackActive;
 	private Preference mDynamicWriteBackSuspend;
@@ -82,6 +73,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 	private int mSeekbarProgress;
 	private EditText settingText;
 	private String sreadahead;
+    private final String BLN_PATH=Helpers.bln_path();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -104,14 +96,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
         mMenuBackIrqChecks= findPreference(PREF_MENUBACK_INTERRUPT_CHECKS);
         mMenuBackFirstErrWait= findPreference(PREF_MENUBACK_FIRST_ERR_WAIT);
         mMenuBackLastErrWait= findPreference(PREF_MENUBACK_LAST_ERR_WAIT);
-        mDirtyRatio = findPreference(PREF_DIRTY_RATIO);
-        mDirtyBackground = findPreference(PREF_DIRTY_BACKGROUND);
-        mDirtyExpireCentisecs = findPreference(PREF_DIRTY_EXPIRE);
-        mDirtyWriteback = findPreference(PREF_DIRTY_WRITEBACK);
-        mMinFreeK =  findPreference(PREF_MIN_FREE_KB);
-        mOvercommit = findPreference(PREF_OVERCOMMIT);
-        mSwappiness =  findPreference(PREF_SWAPPINESS);
-        mVfs = findPreference(PREF_VFS);
+
         mDynamicWriteBackOn = (CheckBoxPreference) findPreference(PREF_DYNAMIC_DIRTY_WRITEBACK);
         mDynamicWriteBackActive = findPreference(PREF_DIRTY_WRITEBACK_ACTIVE);
         mDynamicWriteBackSuspend = findPreference(PREF_DIRTY_WRITEBACK_SUSPEND);
@@ -120,14 +105,14 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
         if (!new File(DSYNC_PATH).exists()) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("dsync");
             getPreferenceScreen().removePreference(hideCat);
-            }
+        }
         else{
             mDsync.setChecked(Helpers.readOneLine(DSYNC_PATH).equals("1"));
         }
         if (!new File(PFK_HOME_ENABLED).exists() || !new File(PFK_MENUBACK_ENABLED).exists()) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("pfk");
             getPreferenceScreen().removePreference(hideCat);
-            }
+        }
         else{
             mHomeOn.setChecked(Helpers.readOneLine(PFK_HOME_ENABLED).equals("1"));
             mHomeOn.setSummary(getString(R.string.ps_home_enabled,Helpers.readOneLine(PFK_HOME_IGNORED_KP)));
@@ -143,18 +128,18 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
         if (!new File(BL_TIMEOUT_PATH).exists()) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("bltimeout");
             getPreferenceScreen().removePreference(hideCat);
-            }
+        }
         else{
             mBltimeout.setSummary(Helpers.readOneLine(BL_TIMEOUT_PATH)+" ms");
         }
         if (!new File(BL_TOUCH_ON_PATH).exists()) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("bltouch");
             getPreferenceScreen().removePreference(hideCat);
-            }
+        }
         else{
             mBltouch.setChecked(Helpers.readOneLine(BL_TOUCH_ON_PATH).equals("1"));
         }
-        if (!new File(BLN_PATH).exists()) {
+        if (BLN_PATH==null) {
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("bln");
             getPreferenceScreen().removePreference(hideCat);
         }
@@ -162,28 +147,18 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
             mBln.setChecked(Helpers.readOneLine(BLN_PATH).equals("1"));
         }
         if (!new File(DYNAMIC_DIRTY_WRITEBACK_PATH).exists()) {
-            mDirtyWriteback.setEnabled(true);
             PreferenceCategory hideCat = (PreferenceCategory) findPreference("cat_dynamic_write_back");
             getPreferenceScreen().removePreference(hideCat);
-            }
+        }
         else{
             boolean ison=Helpers.readOneLine(DYNAMIC_DIRTY_WRITEBACK_PATH).equals("1");
             mDynamicWriteBackOn.setChecked(ison);
-            mDirtyWriteback.setEnabled(!ison);
             mDynamicWriteBackActive.setSummary(Helpers.readOneLine(DIRTY_WRITEBACK_ACTIVE_PATH));
             mDynamicWriteBackSuspend.setSummary(Helpers.readOneLine(DIRTY_WRITEBACK_SUSPEND_PATH));
         }
 		
 	    mReadAhead.setValue(Helpers.readOneLine(READ_AHEAD_PATH[0]));
         mReadAhead.setSummary(getString(R.string.ps_read_ahead, Helpers.readOneLine(READ_AHEAD_PATH[0]) + "  kb"));
-        mDirtyRatio.setSummary(Helpers.readOneLine(DIRTY_RATIO_PATH));
-        mDirtyBackground.setSummary(Helpers.readOneLine(DIRTY_BACKGROUND_PATH));
-        mDirtyExpireCentisecs.setSummary(Helpers.readOneLine(DIRTY_EXPIRE_PATH));
-        mDirtyWriteback.setSummary(Helpers.readOneLine(DIRTY_WRITEBACK_PATH));
-        mMinFreeK.setSummary(Helpers.readOneLine(MIN_FREE_PATH));
-        mOvercommit.setSummary(Helpers.readOneLine(OVERCOMMIT_PATH));
-        mSwappiness.setSummary(Helpers.readOneLine(SWAPPINESS_PATH));
-        mVfs.setSummary(Helpers.readOneLine(VFS_CACHE_PRESSURE_PATH));
             
         setHasOptionsMenu(true);
     }
@@ -196,26 +171,17 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.advanced_menu, menu);
-        final SubMenu smenu = menu.addSubMenu(0, NEW_MENU_ID, 0,getString(R.string.menu_tab));
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        final int cur=mViewPager.getCurrentItem();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(i!=cur)
-            smenu.add(0, NEW_MENU_ID +i+1, 0, mViewPager.getAdapter().getPageTitle(i));
-        }
+        Helpers.addItems2Menu(menu,NEW_MENU_ID,getString(R.string.menu_tab),(ViewPager) getView().getParent());
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.app_settings) {
-            Intent intent = new Intent(getActivity(), PCSettings.class);
-            startActivity(intent);
-        }
-        final ViewPager mViewPager = (ViewPager) getView().getParent();
-        for(int i=0;i< mViewPager.getAdapter().getCount();i++){
-            if(item.getItemId() == NEW_MENU_ID+i+1) {
-                mViewPager.setCurrentItem(i);
-            }
+        Helpers.removeCurItem(item,NEW_MENU_ID,(ViewPager) getView().getParent());
+        switch(item.getItemId()){
+            case R.id.app_settings:
+                Intent intent = new Intent(getActivity(), PCSettings.class);
+                startActivity(intent);
+            break;
         }
         return true;
     }
@@ -303,63 +269,13 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
             int currentProgress = Integer.parseInt(Helpers.readOneLine(PFK_MENUBACK_LAST_ERR_WAIT));
             openDialog(currentProgress, title, 50,100, preference,PFK_MENUBACK_LAST_ERR_WAIT, PREF_MENUBACK_LAST_ERR_WAIT);
             return true;
-	}		
-	else if (preference == mDirtyRatio) {
-            String title = getString(R.string.dirty_ratio_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(DIRTY_RATIO_PATH));
-            openDialog(currentProgress, title, 0,100, preference,DIRTY_RATIO_PATH, PREF_DIRTY_RATIO);
-            return true;
-        }
-	else if (preference == mDirtyBackground) {
-            String title = getString(R.string.dirty_background_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(DIRTY_BACKGROUND_PATH));
-            openDialog(currentProgress, title, 0,100, preference,DIRTY_BACKGROUND_PATH, PREF_DIRTY_BACKGROUND);
-            return true;
-        }
-	else if (preference == mDirtyExpireCentisecs) {
-            String title = getString(R.string.dirty_expire_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(DIRTY_EXPIRE_PATH));
-            openDialog(currentProgress, title, 0,5000, preference,DIRTY_EXPIRE_PATH, PREF_DIRTY_EXPIRE);
-            return true;
-        }
-	else if (preference == mDirtyWriteback) {
-            String title = getString(R.string.dirty_writeback_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(DIRTY_WRITEBACK_PATH));
-            openDialog(currentProgress, title, 0,5000, preference,DIRTY_WRITEBACK_PATH, PREF_DIRTY_WRITEBACK);
-            return true;
-        }
-	else if (preference == mMinFreeK) {
-            String title = getString(R.string.min_free_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(MIN_FREE_PATH));
-            openDialog(currentProgress, title, 0,8192, preference, MIN_FREE_PATH,PREF_MIN_FREE_KB);
-            return true;
-        }
-	else if (preference == mOvercommit) {
-            String title = getString(R.string.overcommit_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(OVERCOMMIT_PATH));
-            openDialog(currentProgress, title, 0,100, preference,OVERCOMMIT_PATH, PREF_OVERCOMMIT);
-            return true;
-        }
-	else if (preference == mSwappiness) {
-            String title = getString(R.string.swappiness_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(SWAPPINESS_PATH));
-            openDialog(currentProgress, title, 0,100, preference,SWAPPINESS_PATH, PREF_SWAPPINESS);
-            return true;
-        }
-	else if (preference == mVfs) {
-            String title = getString(R.string.vfs_title);
-            int currentProgress = Integer.parseInt(Helpers.readOneLine(VFS_CACHE_PRESSURE_PATH));
-            openDialog(currentProgress, title, 0,200, preference,VFS_CACHE_PRESSURE_PATH, PREF_VFS);
-            return true;
-        }
+	}
 	else if (preference == mDynamicWriteBackOn){
 		if (Integer.parseInt(Helpers.readOneLine(DYNAMIC_DIRTY_WRITEBACK_PATH))==0){
 			new CMDProcessor().su.runWaitFor("busybox echo 1 > " + DYNAMIC_DIRTY_WRITEBACK_PATH);
-			mDirtyWriteback.setEnabled(false);
 		}
 		else{
 			new CMDProcessor().su.runWaitFor("busybox echo 0 > " + DYNAMIC_DIRTY_WRITEBACK_PATH);
-			mDirtyWriteback.setEnabled(true);
 		}
             return true;
 	}        
@@ -384,7 +300,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		if (key.equals(PREF_READ_AHEAD)) {
 			String evalues = Helpers.readOneLine(READ_AHEAD_PATH[0]);
-			String values = sharedPreferences.getString(key,evalues);//mPreferences.getString(key,evalues);
+			String values = sharedPreferences.getString(key,evalues);
 			if (!values.equals(evalues)){
 				final StringBuilder sb = new StringBuilder();
 				for(int i=0; i<READ_AHEAD_PATH.length; i++){
@@ -407,7 +323,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 		else if (key.equals(PREF_MENUBACK_LAST_ERR_WAIT)){
 			mMenuBackLastErrWait.setSummary(Helpers.readOneLine(PFK_MENUBACK_LAST_ERR_WAIT)+" ms");
 		}
-    		else if (key.equals(BLX_SOB)) {
+    	else if (key.equals(BLX_SOB)) {
     			if(sharedPreferences.getBoolean(key,false)){
 				editor.putInt(PREF_BLX, Integer.parseInt(Helpers.readOneLine(BLX_PATH))).apply();
     			}
@@ -415,7 +331,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
     				editor.remove(PREF_BLX).apply();
     			}
 		}
-    		else if (key.equals(BLTIMEOUT_SOB)) {
+    	else if (key.equals(BLTIMEOUT_SOB)) {
     			if(sharedPreferences.getBoolean(key,false)){
 				editor.putInt(PREF_BLTIMEOUT, Integer.parseInt(Helpers.readOneLine(BL_TIMEOUT_PATH))).apply();
     			}
@@ -423,7 +339,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
     				editor.remove(PREF_BLTIMEOUT).apply();
     			}
 		}
-    		else if (key.equals(PFK_SOB)) {
+    	else if (key.equals(PFK_SOB)) {
     			if(sharedPreferences.getBoolean(key,false)){
 				if(Helpers.readOneLine(PFK_HOME_ENABLED).equals("1")){
 					editor.putBoolean(PFK_HOME_ON, true);
@@ -455,7 +371,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 				.apply();
     			}
 		}
-    		else if (key.equals(DYNAMIC_DIRTY_WRITEBACK_SOB)) {
+    	else if (key.equals(DYNAMIC_DIRTY_WRITEBACK_SOB)) {
     			if(sharedPreferences.getBoolean(key,false)){
 				if(Helpers.readOneLine(DYNAMIC_DIRTY_WRITEBACK_PATH).equals("1")){
 					editor.putBoolean(PREF_DYNAMIC_DIRTY_WRITEBACK,true);
@@ -474,30 +390,6 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 				.apply();
     			}
 		}
-    		else if (key.equals(VM_SOB)) {
-    			if(sharedPreferences.getBoolean(key,false)){
-				editor.putInt(PREF_DIRTY_RATIO, Integer.parseInt(Helpers.readOneLine(DIRTY_RATIO_PATH)))
-				.putInt(PREF_DIRTY_BACKGROUND, Integer.parseInt(Helpers.readOneLine(DIRTY_BACKGROUND_PATH)))
-				.putInt(PREF_DIRTY_EXPIRE, Integer.parseInt(Helpers.readOneLine(DIRTY_EXPIRE_PATH)))
-				.putInt(PREF_DIRTY_WRITEBACK, Integer.parseInt(Helpers.readOneLine(DIRTY_WRITEBACK_PATH)))
-				.putInt(PREF_MIN_FREE_KB, Integer.parseInt(Helpers.readOneLine(MIN_FREE_PATH)))
-				.putInt(PREF_OVERCOMMIT, Integer.parseInt(Helpers.readOneLine(OVERCOMMIT_PATH)))
-				.putInt(PREF_SWAPPINESS, Integer.parseInt(Helpers.readOneLine(SWAPPINESS_PATH)))
-				.putInt(PREF_VFS, Integer.parseInt(Helpers.readOneLine(VFS_CACHE_PRESSURE_PATH)))				
-				.apply();
-    			}
-    			else{
-				editor.remove(PREF_DIRTY_RATIO)
-				.remove(PREF_DIRTY_BACKGROUND)
-				.remove(PREF_DIRTY_EXPIRE)
-				.remove(PREF_DIRTY_WRITEBACK)
-				.remove(PREF_MIN_FREE_KB)
-				.remove(PREF_OVERCOMMIT)
-				.remove(PREF_SWAPPINESS)
-				.remove(PREF_VFS)
-				.apply();
-    			}
-		}		
     }
 
     public void openDialog(int currentProgress, String title, final int min, final int max,final Preference pref, final String path, final String key) {
@@ -517,7 +409,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 		@Override
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 			if (actionId == EditorInfo.IME_ACTION_DONE) {
-				int val = Integer.valueOf(settingText.getText().toString());
+				int val = Integer.parseInt(settingText.getText().toString());
 				seekbar.setProgress(val);
 				return true;
 			}
@@ -537,12 +429,12 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
             @Override
             public void afterTextChanged(Editable s) {
                 try {
-			int val = Integer.parseInt(s.toString());
-			if (val > max) {
-				s.replace(0, s.length(), Integer.toString(max));
-				val=max;
-			}
-			seekbar.setProgress(val);
+                    int val = Integer.parseInt(s.toString());
+                    if (val > max) {
+                        s.replace(0, s.length(), Integer.toString(max));
+                        val=max;
+                    }
+                    seekbar.setProgress(val);
                 } catch (NumberFormatException ex) {
                 }
             }
@@ -579,7 +471,7 @@ public class Advanced extends PreferenceFragment implements OnSharedPreferenceCh
 			.setPositiveButton(ok, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					int val = Integer.valueOf(settingText.getText().toString());
+					int val = Integer.parseInt(settingText.getText().toString());
 					if(val<min){val=min;}
 					seekbar.setProgress(val);
 					int newProgress = seekbar.getProgress();
