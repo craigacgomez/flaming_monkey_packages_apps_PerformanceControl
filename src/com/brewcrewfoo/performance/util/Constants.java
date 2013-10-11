@@ -1,17 +1,17 @@
 /*
  * Performance Control - An Android CPU Control application Copyright (C) 2012
  * James Roberts
- * 
+ *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -21,7 +21,7 @@ package com.brewcrewfoo.performance.util;
 public interface Constants {
 
     public static final String TAG = "PerformanceControl";
-    public static final String VERSION_NUM = "2.1.3";
+    public static final String VERSION_NUM = "2.1.5";
     //hide flashing kernel/recovery options
     // NO_FLASH=true > hide flash options
     // NO_FLASH=false > show flash options
@@ -39,7 +39,7 @@ public interface Constants {
     //Dynamic frequency scaling
     public static final String DYN_MAX_FREQ_PATH = "/sys/power/cpufreq_max_limit";
     public static final String DYN_MIN_FREQ_PATH = "/sys/power/cpufreq_min_limit";
-    
+
     public static final String NUM_OF_CPUS_PATH = "/sys/devices/system/cpu/present";
 
     public static final String PREF_MAX_CPU = "pref_max_cpu";
@@ -68,7 +68,7 @@ public interface Constants {
     public static final String MINFREE_ADJ_PATH = "/sys/module/lowmemorykiller/parameters/adj";
     public static final String READ_AHEAD_PATH ="/sys/block/mmcblk0/queue/read_ahead_kb";
     //"/sys/devices/virtual/bdi/default/read_ahead_kb"
-    
+
     public static final String INTENT_ACTION_FASTCHARGE = "com.aokp.romcontrol.FCHARGE_CHANGED";
     public static final String PREF_MINFREE = "pref_minfree";
     public static final String PREF_MINFREE_BOOT = "pref_minfree_boot";
